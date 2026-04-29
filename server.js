@@ -28,7 +28,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-const PORT = 8765;
+const PORT = process.env.PORT || 8765;
 
 // streams[key] = { streamer: ws|null, viewers: Set<ws>, pendingFlags: Set<ws> }
 const streams = new Map();

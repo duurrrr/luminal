@@ -127,6 +127,14 @@
   <div class="settings-section">
     <div class="section-label">Image Generation</div>
     <p class="hint">Images are generated locally via SDXL Turbo.<br>Make sure <strong style="color:#555">sdxl_turbo_server.py</strong> is running before joining.</p>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+      <label style="font-size:9px; letter-spacing:0.2em; color:var(--muted); white-space:nowrap;">SDXL URL</label>
+      <input type="text" id="sdxl-url" value="http://localhost:5556" placeholder="http://localhost:5556 or https://xxxx.ngrok-free.app"
+        style="flex:1; background:#111; border:1px solid var(--border); color:var(--text); padding:7px 10px; font-family:var(--font-mono); font-size:11px; outline:none;" />
+    </div>
+    <div id="https-warning" style="display:none; font-size:9px; letter-spacing:0.1em; color:#ff9944; padding:6px 10px; background:#1a1000; border:1px solid #3a2000; margin-top:8px;">
+      ⚠ Page is on HTTPS — SDXL URL must also be HTTPS. Run: <code style="color:#ff9944;">ngrok http 5556</code> and paste the URL above.
+    </div>
   </div>
 </div>
 
@@ -181,8 +189,10 @@
 </div>
 
 <script>
-const WS_URL = `ws://${location.host}`;
+const WS_URL = `wss://${location.host}`;
 let ws = null, streamKey = null;
+
+function sdxlUrl() { return document.getElementById('sdxl-url').value.trim() || 'http://localhost:5556'; }
 let currentDescription = '';
 let isGenerating = false, hasFirstImage = false;
 let statsRecv = 0, statsImgs = 0;
@@ -298,7 +308,7 @@ async function generateImage(description) {
   log('GEN','tag-gen','Sending description to SDXL Turbo...');
 
   try {
-    const res = await fetch('http://localhost:5556/generate', {
+    const res = await fetch(`${sdxlUrl()}/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt: description })
@@ -330,6 +340,12 @@ function showImage(src) {
     if (!hasFirstImage) { overlay.classList.add('hidden'); hasFirstImage = true; }
   };
   img.src = src;
+}
+
+if (location.protocol === 'https:') {
+  document.getElementById('https-warning').style.display = 'block';
+  document.getElementById('sdxl-url').value = '';
+  document.getElementById('sdxl-url').placeholder = 'https://xxxx.ngrok-free.app (required on HTTPS)';
 }
 </script>
 </body>

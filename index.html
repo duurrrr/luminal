@@ -390,23 +390,33 @@
       LUMINAL runs AI models locally on your machine — nothing is sent to the cloud.<br>
       Download the script for your role, install the dependencies once, and run it before opening the site.
     </p>
-    <div class="download-grid">
+    <div class="download-grid" style="grid-template-columns: 1fr 1fr 1fr;">
 
       <div class="download-card blip">
-        <div class="dl-label">For Streamers</div>
+        <div class="dl-label">Streamers — Step 1 of 2</div>
         <div class="dl-name">BLIP SERVER</div>
         <div class="dl-desc">
-          Runs the vision AI locally on your machine. Describes your camera feed in real time and sends descriptions to viewers.
+          The vision AI that runs on your machine and describes your camera feed. Stays 100% local — nothing is sent to the cloud.
         </div>
         <div class="dl-who">Required by: <span>Streamers only</span></div>
         <a href="/blip_server.py" download class="dl-btn">↓ blip_server.py</a>
       </div>
 
+      <div class="download-card" style="border-top-color: #7c6fff;" >
+        <div class="dl-label">Everyone — Step 2 of 2</div>
+        <div class="dl-name" style="color:#7c6fff;">NGROK</div>
+        <div class="dl-desc">
+          A free tunnel that lets the website securely reach your local AI server. Required for both streamers (port 5555) and viewers (port 5556) because the site runs on HTTPS. Free account, one-time setup.
+        </div>
+        <div class="dl-who">Required by: <span>Streamers &amp; Viewers</span></div>
+        <a href="https://ngrok.com/download" target="_blank" class="dl-btn" style="color:#7c6fff; border-color:#7c6fff;">↗ ngrok.com/download</a>
+      </div>
+
       <div class="download-card sdxl">
-        <div class="dl-label">For Viewers</div>
+        <div class="dl-label">Viewers — Step 1 of 2</div>
         <div class="dl-name">SDXL SERVER</div>
         <div class="dl-desc">
-          Runs image generation locally on your machine. Reconstructs the scene from descriptions using Stable Diffusion Turbo.
+          Runs image generation locally on your machine. Reconstructs the scene from AI descriptions using Stable Diffusion Turbo.
         </div>
         <div class="dl-who">Required by: <span>Viewers only</span></div>
         <a href="/sdxl_turbo_server.py" download class="dl-btn">↓ sdxl_turbo_server.py</a>
@@ -430,17 +440,20 @@
       <div class="instr-group">
         <div class="instr-heading">If you are streaming</div>
         <div class="step"><div class="step-num">1</div><div class="step-text">Download <strong>blip_server.py</strong> from the Downloads tab and install the dependencies listed there (one time only).</div></div>
-        <div class="step"><div class="step-num">2</div><div class="step-text">Open a terminal in the folder where you saved the file and run: <code>python blip_server.py</code> — wait until it says <strong>BLIP model loaded</strong>.</div></div>
-        <div class="step"><div class="step-num">3</div><div class="step-text">Come back to this page and click <strong>STREAM</strong>. Allow camera access and click <strong>GO LIVE</strong>.</div></div>
-        <div class="step"><div class="step-num">4</div><div class="step-text">Share the <strong>4-letter stream key</strong> shown on screen with whoever wants to watch.</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-text">Open a terminal and run: <code>python blip_server.py</code> — wait until it says <strong>BLIP model loaded</strong>. Keep this terminal open.</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-text">Download and install <strong>ngrok</strong> from the Downloads tab (one time only). Create a free account at <strong>ngrok.com</strong>, then run: <code>ngrok config add-authtoken YOUR_TOKEN</code> with the token from your ngrok dashboard.</div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-text">Open a <strong>second terminal</strong> and run: <code>ngrok http 5555</code> — ngrok will show a URL like <strong>https://abc123.ngrok-free.app</strong>. Copy that URL. Keep this terminal open too.</div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-text">Come back here and click <strong>STREAM</strong>. Paste your ngrok URL into the <strong>BLIP URL</strong> field, allow camera access, then click <strong>GO LIVE</strong>.</div></div>
+        <div class="step"><div class="step-num">6</div><div class="step-text">Share the <strong>4-letter stream key</strong> shown on screen with whoever wants to watch. They just need this page — no downloads required.</div></div>
       </div>
 
       <div class="instr-group">
         <div class="instr-heading">If you are watching</div>
-        <div class="step"><div class="step-num">1</div><div class="step-text">Download <strong>sdxl_turbo_server.py</strong> from the Downloads tab and install the dependencies listed there (one time only).</div></div>
-        <div class="step"><div class="step-num">2</div><div class="step-text">Open a terminal in the folder where you saved the file and run: <code>python sdxl_turbo_server.py</code> — wait until it says <strong>SD Turbo ready</strong>. The first run downloads ~2GB.</div></div>
-        <div class="step"><div class="step-num">3</div><div class="step-text">Come back to this page and click <strong>WATCH</strong>. Enter the stream key from the streamer and click <strong>JOIN</strong>.</div></div>
-        <div class="step"><div class="step-num">4</div><div class="step-text">The first image takes a moment to generate. After that, images update continuously as the AI reconstructs what the camera sees.</div></div>
+        <div class="step"><div class="step-num">1</div><div class="step-text">Download <strong>sdxl_turbo_server.py</strong> from the Downloads tab and install the dependencies listed there (one time only). The first run downloads ~2GB.</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-text">Open a terminal and run: <code>python sdxl_turbo_server.py</code> — wait until it says <strong>SD Turbo ready</strong>. Keep this terminal open.</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-text">Download and install <strong>ngrok</strong> (one time only). Set up your free account, then run: <code>ngrok http 5556</code> — copy the <strong>https://xxxx.ngrok-free.app</strong> URL it gives you. Keep this terminal open too.</div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-text">Come back here and click <strong>WATCH</strong>. Paste your ngrok URL into the <strong>SDXL URL</strong> field, enter the stream key from the streamer, and click <strong>JOIN</strong>.</div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-text">The first image takes a moment to generate. After that, images update continuously as the AI reconstructs what the camera sees.</div></div>
       </div>
 
       <div class="instr-group">
@@ -455,7 +468,7 @@
 
 <footer>
   <span class="footer-logo">LUMINAL</span>
-  <span class="footer-text"><span class="live-dot"></span>Local AI — no data leaves your machine</span>
+  <span class="footer-text"><span class="live-dot"></span>AI runs locally — video never leaves your machine</span>
 </footer>
 
 <script>

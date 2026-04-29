@@ -113,6 +113,14 @@
         <button class="copy-btn" onclick="copyKey()">Copy</button>
       </div>
 
+      <div class="field-row">
+        <label>BLIP URL</label>
+        <input type="text" id="blip-url" value="http://localhost:5555" placeholder="http://localhost:5555 or https://xxxx.ngrok.io" />
+      </div>
+      <div id="https-warning" style="display:none; font-size:9px; letter-spacing:0.1em; color:#ff9944; padding:6px 10px; background:#1a1000; border:1px solid #3a2000;">
+        ⚠ Page is on HTTPS — BLIP URL must also be HTTPS (use ngrok: <code>ngrok http 5555</code>)
+      </div>
+
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn-live" id="go-live-btn" onclick="startStream()" disabled style="opacity:0.4;cursor:not-allowed;">GO LIVE</button>
         <button class="btn-stop" id="stop-btn" onclick="stopStream()">STOP</button>
@@ -158,8 +166,10 @@
 <canvas id="capture-canvas"></canvas>
 
 <script>
-const WS_URL = `ws://${location.host}`;
+const WS_URL = `wss://${location.host}`;
 let ws = null, streamKey = null, cameraStream = null;
+
+function blipUrl() { return document.getElementById('blip-url').value.trim() || 'http://localhost:5555'; }
 let currentDescription = '';
 let statsDescs = 0, statsSent = 0, isLive = false;
 let bitrateOn = [false, false];
@@ -254,7 +264,7 @@ async function descriptionLoop() {
     log('AI','tag-desc',`Frame captured → ${w}x${h}px — sending to BLIP...`);
 
     try {
-      const res = await fetch('http://localhost:5555/describe', {
+      const res = await fetch(`${blipUrl()}/describe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: b64 })
@@ -390,7 +400,7 @@ async function testLlava() {
   log('AI','tag-desc',`TEST — frame ${w}x${h}, b64 length: ${b64.length}`);
 
   try {
-    const res = await fetch('http://localhost:5555/describe', {
+    const res = await fetch(`${blipUrl()}/describe`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ image: b64 })
@@ -418,6 +428,11 @@ function copyKey() {
 }
 
 connectWS();
+if (location.protocol === 'https:') {
+  document.getElementById('https-warning').style.display = 'block';
+  document.getElementById('blip-url').value = '';
+  document.getElementById('blip-url').placeholder = 'https://xxxx.ngrok-free.app (required on HTTPS)';
+}
 </script>
 </body>
 </html>
