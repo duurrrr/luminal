@@ -1,0 +1,12 @@
+{
+  "name": "luminal-ai-stream",
+  "version": "1.0.0",
+  "description": "AI Vision Streaming — LLaVA describes your camera, viewers reconstruct the scene with local AI image generation",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.17.0"
+  }
+}

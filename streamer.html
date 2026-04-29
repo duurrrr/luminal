@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LUMINAL — Streamer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #080808; --surface: #0f0f0f; --border: #222;
+    --accent: #ff4c3c; --accent2: #e8ff3c; --text: #f0ede6; --muted: #555;
+    --font-display: 'Bebas Neue', sans-serif; --font-mono: 'DM Mono', monospace;
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font-mono); overflow: hidden; }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.03; pointer-events: none; z-index: 100;
+  }
+  header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 24px; border-bottom: 1px solid var(--border); height: 53px;
+  }
+  .logo-sm { font-family: var(--font-display); font-size: 28px; letter-spacing: 0.12em; color: var(--accent); }
+  .role-badge { font-size: 9px; letter-spacing: 0.35em; color: var(--muted); border: 1px solid var(--border); padding: 4px 10px; text-transform: uppercase; }
+  .back-link { margin-left: auto; font-size: 10px; letter-spacing: 0.2em; color: var(--muted); text-decoration: none; }
+  .back-link:hover { color: var(--text); }
+  main { display: grid; grid-template-columns: 1fr 1fr 300px; height: calc(100vh - 53px); overflow: hidden; }
+  .panel { display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; }
+  .panel:last-child { border-right: none; }
+  .panel-header { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .panel-title { font-size: 9px; letter-spacing: 0.4em; color: var(--muted); text-transform: uppercase; }
+  .panel-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+  .toggle-btn {
+    padding: 3px 9px; background: none; border: 1px solid var(--border); color: var(--muted);
+    font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.25em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .toggle-btn:hover, .toggle-btn.on { border-color: var(--accent2); color: var(--accent2); }
+  .ml { margin-left: auto; }
+  .video-wrap { position: relative; background: #000; border: 1px solid var(--border); aspect-ratio: 16/9; overflow: hidden; flex-shrink: 0; }
+  .video-wrap video, .video-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .video-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; letter-spacing: 0.15em; color: var(--muted); text-align: center; padding: 10px; }
+  .rec-indicator { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 6px; font-size: 8px; letter-spacing: 0.3em; color: var(--accent); opacity: 0; transition: opacity 0.3s; }
+  .rec-indicator.active { opacity: 1; }
+  .rec-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 1s infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
+  .bitrate-bar { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.8); padding: 5px 10px; font-size: 9px; color: var(--accent2); display: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bitrate-bar.visible { display: block; }
+  .bitrate-label { color: var(--muted); margin-right: 6px; }
+  .key-display { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); flex-shrink: 0; }
+  .key-value { font-family: var(--font-display); font-size: 32px; letter-spacing: 0.2em; color: var(--accent2); }
+  .copy-btn { margin-left: auto; padding: 5px 12px; background: none; border: 1px solid var(--border); color: var(--muted); font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.3em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+  .copy-btn:hover { border-color: #444; color: var(--text); }
+  .desc-box { overflow-y: auto; padding: 12px 14px; background: #080d14; border: 1px solid #152030; font-size: 11px; line-height: 1.85; color: #7a90a8; font-style: italic; letter-spacing: 0.02em; display: none; min-height: 80px; max-height: 280px; scrollbar-width: thin; scrollbar-color: #1a2a3a transparent; }
+  .desc-box.visible { display: block; }
+  .desc-placeholder { color: #1e2a38; font-style: normal; font-size: 9px; letter-spacing: 0.15em; }
+  .field-row { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .field-row label { font-size: 9px; letter-spacing: 0.2em; color: var(--muted); white-space: nowrap; }
+  .field-row input { flex: 1; background: #111; border: 1px solid var(--border); color: var(--text); padding: 7px 10px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em; outline: none; }
+  .field-row input:focus { border-color: var(--accent); }
+  .btn-live { padding: 12px 22px; background: var(--accent); color: #000; border: none; font-family: var(--font-display); font-size: 20px; letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s; }
+  .btn-live:hover { background: #ff6655; }
+  .btn-stop { padding: 12px 22px; background: none; color: var(--accent); border: 1px solid var(--accent); font-family: var(--font-display); font-size: 20px; letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s; display: none; }
+  .btn-stop:hover { background: var(--accent); color: #000; }
+  .btn-test { padding: 12px 18px; background: none; color: var(--accent2); border: 1px solid var(--accent2); font-family: var(--font-display); font-size: 18px; letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s; }
+  .btn-test:hover { background: var(--accent2); color: #000; }
+  .btn-test:disabled { border-color: #333; color: #333; cursor: not-allowed; }
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex-shrink: 0; }
+  .stat-box { background: var(--surface); border: 1px solid var(--border); padding: 12px 14px; }
+  .stat-num { font-family: var(--font-display); font-size: 28px; color: var(--accent2); line-height: 1; }
+  .stat-lbl { font-size: 8px; letter-spacing: 0.3em; color: var(--muted); margin-top: 3px; }
+  .log-box { flex: 1; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); padding: 12px; font-size: 9px; line-height: 1.7; scrollbar-width: thin; scrollbar-color: #2a2a2a transparent; }
+  .log-entry { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .log-entry:last-child { border-bottom: none; }
+  .log-time { color: var(--muted); margin-right: 6px; font-size: 8px; }
+  .log-tag { padding: 1px 5px; font-size: 7px; letter-spacing: 0.2em; margin-right: 5px; }
+  .tag-info { background: #1a2a1a; color: #4caf50; }
+  .tag-desc { background: #1a1a2a; color: #5c9cff; }
+  .tag-flag { background: #2a1a00; color: var(--accent2); }
+  .tag-send { background: #2a0a0a; color: var(--accent); }
+  .tag-err  { background: #2a0000; color: #ff5555; }
+  canvas#capture-canvas { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <span class="logo-sm">LUMINAL</span>
+  <span class="role-badge">Streamer</span>
+  <a href="/" class="back-link">← Back</a>
+</header>
+
+<main>
+  <!-- Panel 1: Live camera -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Live Camera</span>
+      <button class="toggle-btn ml" id="bt1" onclick="toggleBitrate(1)">Bitrate</button>
+    </div>
+    <div class="panel-body">
+      <div class="video-wrap">
+        <video id="camera-feed" autoplay muted playsinline></video>
+        <div class="video-placeholder" id="cam-placeholder">Click GO LIVE to start</div>
+        <div class="rec-indicator" id="rec-indicator"><div class="rec-dot"></div> LIVE</div>
+        <div class="bitrate-bar" id="bitrate-1">
+          <span class="bitrate-label">LAST DESC →</span><span id="bitrate-1-text"></span>
+        </div>
+      </div>
+      <div class="key-display">
+        <span class="key-value" id="key-display">——</span>
+        <button class="copy-btn" onclick="copyKey()">Copy</button>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn-live" id="go-live-btn" onclick="startStream()">GO LIVE</button>
+        <button class="btn-stop" id="stop-btn" onclick="stopStream()">STOP</button>
+        <button class="btn-test" id="test-btn" onclick="testLlava()">TEST BLIP</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 2: Frame currently being described -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Frame Being Described</span>
+      <button class="toggle-btn ml" id="bt2" onclick="toggleBitrate(2)">Bitrate</button>
+      <button class="toggle-btn" id="desc-toggle" onclick="toggleDesc()" style="margin-left:6px;">Description</button>
+    </div>
+    <div class="panel-body">
+      <div class="video-wrap">
+        <img id="captured-frame" src="" alt="" style="display:none; width:100%; height:100%; object-fit:cover;">
+        <div class="video-placeholder" id="frame-placeholder">Captured frames appear here once live</div>
+        <div class="bitrate-bar" id="bitrate-2">
+          <span class="bitrate-label">LAST DESC →</span><span id="bitrate-2-text"></span>
+        </div>
+      </div>
+      <div class="desc-box" id="desc-box">
+        <span class="desc-placeholder">Description will appear here once the stream starts...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 3: Stats + log -->
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">Monitor</span></div>
+    <div class="panel-body">
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-num" id="stat-descs">0</div><div class="stat-lbl">Descriptions</div></div>
+        <div class="stat-box"><div class="stat-num" id="stat-sent">0</div><div class="stat-lbl">Sent</div></div>
+      </div>
+      <div class="log-box" id="log-box"></div>
+    </div>
+  </div>
+</main>
+
+<canvas id="capture-canvas"></canvas>
+
+<script>
+const WS_URL = `ws://${location.host}`;
+let ws = null, streamKey = null, cameraStream = null;
+let currentDescription = '';
+let statsDescs = 0, statsSent = 0, isLive = false;
+let bitrateOn = [false, false];
+let descOn = false;
+let lastDescTime = null;  // timestamp when last description was stored
+
+function log(tag, cls, text) {
+  const box = document.getElementById('log-box');
+  const now = new Date().toLocaleTimeString('en-US', { hour12: false });
+  const el = document.createElement('div');
+  el.className = 'log-entry';
+  el.innerHTML = `<span class="log-time">${now}</span><span class="log-tag ${cls}">${tag}</span>${String(text).replace(/</g,'&lt;')}`;
+  box.prepend(el);
+}
+
+function toggleBitrate(n) {
+  bitrateOn[n-1] = !bitrateOn[n-1];
+  document.getElementById(`bitrate-${n}`).classList.toggle('visible', bitrateOn[n-1]);
+  document.getElementById(`bt${n}`).classList.toggle('on', bitrateOn[n-1]);
+}
+
+function toggleDesc() {
+  descOn = !descOn;
+  document.getElementById('desc-box').classList.toggle('visible', descOn);
+  document.getElementById('desc-toggle').classList.toggle('on', descOn);
+}
+
+function updateDisplays(desc, bps) {
+  const bitrateStr = bps !== null && bps !== undefined
+    ? `${bps} bps (${(bps/1000).toFixed(1)} kbps) — ${desc.length} chars × 8 bits`
+    : 'Waiting for second frame...';
+  document.getElementById('bitrate-1-text').textContent = bitrateStr;
+  document.getElementById('bitrate-2-text').textContent = bitrateStr;
+  const box = document.getElementById('desc-box');
+  box.textContent = desc;
+}
+
+function connectWS() {
+  ws = new WebSocket(WS_URL);
+  ws.onopen = () => { log('WS','tag-info','Connected'); ws.send(JSON.stringify({ type: 'generate_key' })); };
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'generated_key') {
+      streamKey = msg.key;
+      document.getElementById('key-display').textContent = streamKey;
+      log('KEY','tag-info',`Stream key: ${streamKey}`);
+    } else if (msg.type === 'registered') {
+      log('REG','tag-info',`Registered on key ${msg.key}`);
+    } else if (msg.type === 'viewer_ready') {
+      log('FLAG','tag-flag','Viewer flag raised — sending description');
+      sendDescription();
+    } else if (msg.type === 'error') {
+      log('ERR','tag-err', msg.message);
+    }
+  };
+  ws.onclose = () => { log('WS','tag-err','Disconnected. Reconnecting...'); setTimeout(connectWS, 3000); };
+  ws.onerror = () => ws.close();
+}
+
+function sendDescription() {
+  if (!currentDescription) { log('FLAG','tag-flag','No description yet — viewer will retry'); return; }
+  ws.send(JSON.stringify({ type: 'description', key: streamKey, description: currentDescription, sentAt: Date.now() }));
+  statsSent++;
+  document.getElementById('stat-sent').textContent = statsSent;
+  log('SEND','tag-send',`Sent ${currentDescription.length} chars`);
+}
+
+async function descriptionLoop() {
+  // Make sure the video has real frames before we start
+  await waitForFrame();
+  while (isLive) {
+    // Small yield so the browser paints the latest video frame to the canvas
+    await new Promise(r => setTimeout(r, 50));
+    const { b64, dataUrl, w, h } = captureFrame();
+
+    // Show the captured frame in panel 2
+    const img = document.getElementById('captured-frame');
+    img.src = dataUrl;
+    img.style.display = 'block';
+    document.getElementById('frame-placeholder').style.display = 'none';
+
+    log('AI','tag-desc',`Frame captured → ${w}x${h}px — sending to BLIP...`);
+
+    try {
+      const res = await fetch('http://localhost:5555/describe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: b64 })
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`BLIP HTTP ${res.status}: ${errText.slice(0,200)}`);
+      }
+      const data = await res.json();
+      const reply = data.description || '';
+      if (!reply || reply.length < 5) {
+        log('ERR','tag-err',`BLIP empty response`);
+        await new Promise(r => setTimeout(r, 2000));
+        continue;
+      }
+      const now = Date.now();
+      const bits = reply.length * 8;
+      const seconds = lastDescTime ? (now - lastDescTime) / 1000 : null;
+      const bps = seconds ? Math.round(bits / seconds) : null;
+      lastDescTime = now;
+      currentDescription = reply;
+      statsDescs++;
+      document.getElementById('stat-descs').textContent = statsDescs;
+      log('DESC','tag-desc', currentDescription.slice(0,90)+'…');
+      updateDisplays(currentDescription, bps);
+    } catch (err) {
+      log('ERR','tag-err',`BLIP: ${err.message} — is blip_server.py running?`);
+      await new Promise(r => setTimeout(r, 3000));
+    }
+  }
+}
+
+async function startCamera() {
+  // If camera already running (e.g. from TEST BLIP), reuse it
+  if (cameraStream) {
+    document.getElementById('cam-placeholder').style.display = 'none';
+    document.getElementById('rec-indicator').classList.add('active');
+    return;
+  }
+  cameraStream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: false });
+  const video = document.getElementById('camera-feed');
+  video.srcObject = cameraStream;
+  // If already playing (readyState 4), no need to wait for onplaying
+  if (video.readyState < 3) {
+    await new Promise(resolve => {
+      video.onplaying = resolve;
+      setTimeout(resolve, 3000);
+    });
+  }
+  document.getElementById('cam-placeholder').style.display = 'none';
+  document.getElementById('rec-indicator').classList.add('active');
+}
+
+// Poll until the video has real pixel data ready, with a 5s timeout
+async function waitForFrame() {
+  const video = document.getElementById('camera-feed');
+  const deadline = Date.now() + 5000;
+  while ((video.readyState < 3 || video.videoWidth === 0) && Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, 100));
+  }
+  // Give the browser one extra frame to paint
+  await new Promise(r => requestAnimationFrame(r));
+}
+
+function captureFrame() {
+  const video = document.getElementById('camera-feed');
+  const canvas = document.getElementById('capture-canvas');
+  // Capture at native resolution (capped at 1024px wide) — PNG avoids JPEG artifacts
+  const w = Math.min(video.videoWidth || 1280, 1024);
+  const h = Math.round(w * (video.videoHeight || 720) / (video.videoWidth || 1280));
+  canvas.width = w;
+  canvas.height = h;
+  canvas.getContext('2d').drawImage(video, 0, 0, w, h);
+  const dataUrl = canvas.toDataURL('image/png');
+  return { b64: dataUrl.split(',')[1], dataUrl, w, h };
+}
+
+async function startStream() {
+  try { await startCamera(); } catch (err) { log('ERR','tag-err',`Camera: ${err.message}`); return; }
+  ws.send(JSON.stringify({ type: 'register_streamer', key: streamKey }));
+  isLive = true;
+  document.getElementById('go-live-btn').style.display = 'none';
+  document.getElementById('stop-btn').style.display = 'inline-block';
+  log('LIVE','tag-info','Stream started — description loop running');
+  descriptionLoop();
+}
+
+function stopStream() {
+  isLive = false;
+  if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
+  document.getElementById('go-live-btn').style.display = 'inline-block';
+  document.getElementById('stop-btn').style.display = 'none';
+  document.getElementById('rec-indicator').classList.remove('active');
+  document.getElementById('cam-placeholder').style.display = 'flex';
+  log('STOP','tag-err','Stream stopped.');
+}
+
+// One-shot test: capture a frame, send to BLIP, show response in log
+async function testLlava() {
+  const btn = document.getElementById('test-btn');
+  btn.disabled = true;
+  btn.textContent = 'TESTING...';
+
+  const video = document.getElementById('camera-feed');
+  if (!cameraStream || video.readyState < 2) {
+    try {
+      cameraStream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: false });
+      video.srcObject = cameraStream;
+      await new Promise(resolve => { video.onplaying = resolve; setTimeout(resolve, 2000); });
+      document.getElementById('cam-placeholder').style.display = 'none';
+    } catch(e) {
+      log('ERR','tag-err',`Camera: ${e.message}`);
+      btn.disabled = false; btn.textContent = 'TEST BLIP'; return;
+    }
+  }
+
+  await new Promise(r => setTimeout(r, 100));
+  const { b64, w, h } = captureFrame();
+  log('AI','tag-desc',`TEST — frame ${w}x${h}, b64 length: ${b64.length}`);
+
+  try {
+    const res = await fetch('http://localhost:5555/describe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: b64 })
+    });
+    const raw = await res.text();
+    log('TEST','tag-desc', `HTTP ${res.status} — raw: ${raw.slice(0,400)}`);
+    if (res.ok) {
+      const d = JSON.parse(raw);
+      log('TEST','tag-send', `BLIP says: "${d.description}"`);
+    }
+  } catch(err) {
+    log('ERR','tag-err', `Test failed: ${err.message} — is blip_server.py running?`);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'TEST BLIP';
+}
+
+function copyKey() {
+  if (!streamKey) return;
+  navigator.clipboard.writeText(streamKey);
+  const btn = event.target;
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 1500);
+}
+
+connectWS();
+</script>
+</body>
+</html>
