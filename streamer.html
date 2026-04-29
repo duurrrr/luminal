@@ -323,7 +323,21 @@ function captureFrame() {
 }
 
 async function startStream() {
-  try { await startCamera(); } catch (err) { log('ERR','tag-err',`Camera: ${err.message}`); return; }
+  log('LIVE','tag-info','Starting stream...');
+
+  if (!ws || ws.readyState !== 1) {
+    log('ERR','tag-err','WebSocket not connected — try refreshing the page');
+    return;
+  }
+  if (!streamKey) {
+    log('ERR','tag-err','No stream key yet — wait a moment and try again');
+    return;
+  }
+
+  try { await startCamera(); }
+  catch (err) { log('ERR','tag-err',`Camera: ${err.message}`); return; }
+
+  log('LIVE','tag-info','Camera ready — registering with server...');
   ws.send(JSON.stringify({ type: 'register_streamer', key: streamKey }));
   isLive = true;
   document.getElementById('go-live-btn').style.display = 'none';

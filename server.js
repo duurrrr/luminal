@@ -44,19 +44,37 @@ function send(ws, obj) {
   if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj));
 }
 
-// Simple HTTP server to serve the HTML clients
+// Simple HTTP server to serve the HTML clients and Python downloads
 const httpServer = http.createServer((req, res) => {
-  const routes = {
+  const url = req.url.split("?")[0];
+
+  const htmlRoutes = {
     "/": "index.html",
     "/streamer": "streamer.html",
     "/viewer": "viewer.html",
   };
-  const file = routes[req.url.split("?")[0]];
-  if (file) {
-    const filePath = path.join(__dirname, file);
+
+  const downloadRoutes = {
+    "/blip_server.py": { file: "blip_server.py", name: "blip_server.py" },
+    "/sdxl_turbo_server.py": { file: "sdxl_turbo_server.py", name: "sdxl_turbo_server.py" },
+  };
+
+  if (htmlRoutes[url]) {
+    const filePath = path.join(__dirname, htmlRoutes[url]);
     fs.readFile(filePath, (err, data) => {
       if (err) { res.writeHead(404); res.end("Not found"); return; }
       res.writeHead(200, { "Content-Type": "text/html" });
+      res.end(data);
+    });
+  } else if (downloadRoutes[url]) {
+    const { file, name } = downloadRoutes[url];
+    const filePath = path.join(__dirname, file);
+    fs.readFile(filePath, (err, data) => {
+      if (err) { res.writeHead(404); res.end("File not found"); return; }
+      res.writeHead(200, {
+        "Content-Type": "text/plain",
+        "Content-Disposition": `attachment; filename="${name}"`,
+      });
       res.end(data);
     });
   } else {
