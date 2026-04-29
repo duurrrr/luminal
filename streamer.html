@@ -114,7 +114,7 @@
       </div>
 
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn-live" id="go-live-btn" onclick="startStream()">GO LIVE</button>
+        <button class="btn-live" id="go-live-btn" onclick="startStream()" disabled style="opacity:0.4;cursor:not-allowed;">GO LIVE</button>
         <button class="btn-stop" id="stop-btn" onclick="stopStream()">STOP</button>
         <button class="btn-test" id="test-btn" onclick="testLlava()">TEST BLIP</button>
       </div>
@@ -199,7 +199,12 @@ function updateDisplays(desc, bps) {
 
 function connectWS() {
   ws = new WebSocket(WS_URL);
-  ws.onopen = () => { log('WS','tag-info','Connected'); ws.send(JSON.stringify({ type: 'generate_key' })); };
+  ws.onopen = () => {
+    log('WS','tag-info','Connected');
+    ws.send(JSON.stringify({ type: 'generate_key' }));
+    const btn = document.getElementById('go-live-btn');
+    btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = '';
+  };
   ws.onmessage = (e) => {
     const msg = JSON.parse(e.data);
     if (msg.type === 'generated_key') {
@@ -215,7 +220,12 @@ function connectWS() {
       log('ERR','tag-err', msg.message);
     }
   };
-  ws.onclose = () => { log('WS','tag-err','Disconnected. Reconnecting...'); setTimeout(connectWS, 3000); };
+  ws.onclose = () => {
+    log('WS','tag-err','Disconnected. Reconnecting...');
+    const btn = document.getElementById('go-live-btn');
+    btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed';
+    setTimeout(connectWS, 3000);
+  };
   ws.onerror = () => ws.close();
 }
 
